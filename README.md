@@ -3,6 +3,8 @@ This is my solution to apartment list's coding challenge.
 
 My result is 24074.
 
+But if the last ME in the dictionary.txt is a typo, or should be ignord, then the answer is 24073
+
 My program takes two cmd line arguments:
  * the first is the filename of dictionary text
  * the second is the word we are interested in

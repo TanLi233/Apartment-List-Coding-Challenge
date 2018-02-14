@@ -40,15 +40,19 @@ public class network_size {
     // then remove this word and its friends from the dictionary
     public static ArrayList<String> findFriends(String word, ArrayList<String> dic) {
         ArrayList<String> res = new ArrayList<String>();
-        for (String var : dic) {
-            if (editDistance(var, word) == 1) {
-                res.add(var);
+        ArrayList<Integer> indices = new ArrayList<Integer>();
+        for (int i = 0; i < dic.size(); ++i) {
+            if (dic.get(i).equals(word)) {
+                indices.add(i);
+            }
+            if (editDistance(dic.get(i), word) == 1) {
+                res.add(dic.get(i));
+                indices.add(i);
             }
         }
-        for (String var : res) {
-            dic.remove(var);
+        for (int i = 0; i < indices.size(); ++i) {
+            dic.remove(indices.get(i) - i);
         }
-        dic.remove(word);
         return res;
     }
 
