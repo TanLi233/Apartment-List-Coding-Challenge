@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
  * the first is the filename of dictionary text
  * the second is the word we are interested in
  */
-public class network_size{
+public class network_size {
     public static void main(String[] args) {
         String filename = args[0];
         String word = args[1];
@@ -57,26 +57,25 @@ public class network_size{
         int len = word.length();
         int maxLength = dividedDic.size() - 1;
         if (len > 1 && (len - 1) < maxLength) {
-            ArrayList<String> r1 = _findFriendsIndic(word, dividedDic.get(len-2));
-            ArrayList<String> r2 = _findFriendsIndic(word, dividedDic.get(len-1));
+            ArrayList<String> r1 = _findFriendsIndic(word, dividedDic.get(len - 2));
+            ArrayList<String> r2 = _findFriendsIndic(word, dividedDic.get(len - 1));
             ArrayList<String> r3 = _findFriendsIndic(word, dividedDic.get(len));
             r1.addAll(r2);
             r1.addAll(r3);
             res = r1;
-        } else if(len == 1) {
-            ArrayList<String> r2 = _findFriendsIndic(word, dividedDic.get(len-1));
+        } else if (len == 1) {
+            ArrayList<String> r2 = _findFriendsIndic(word, dividedDic.get(len - 1));
             ArrayList<String> r3 = _findFriendsIndic(word, dividedDic.get(len));
             r2.addAll(r3);
             res = r2;
-        }else {
-            ArrayList<String> r1 = _findFriendsIndic(word, dividedDic.get(len-2));
-            ArrayList<String> r2 = _findFriendsIndic(word, dividedDic.get(len-1));
+        } else {
+            ArrayList<String> r1 = _findFriendsIndic(word, dividedDic.get(len - 2));
+            ArrayList<String> r2 = _findFriendsIndic(word, dividedDic.get(len - 1));
             r1.addAll(r2);
             res = r1;
         }
         return res;
     }
-
 
     //return a word's friends within a subdictionary 
     // then remove this word and its friends from the subdictionary
@@ -87,7 +86,7 @@ public class network_size{
             if (dic.get(i).equals(word)) {
                 indices.add(i);
             }
-            if (editDistance(dic.get(i), word) == 1) {
+            if (_isOneEditDistance(dic.get(i), word)) {
                 res.add(dic.get(i));
                 indices.add(i);
             }
@@ -114,45 +113,50 @@ public class network_size{
         return count;
     }
 
-    //compute edit distence of two strings
-    //reference: https://www.programcreek.com/2013/12/edit-distance-in-java/
-    public static int editDistance(String word1, String word2) {
-        int len1 = word1.length();
-        int len2 = word2.length();
+    //calculate if two words have edit distence of 1
+    //reference: https://www.programcreek.com/2014/05/leetcode-one-edit-distance-java/
+    private static boolean _isOneEditDistance(String s, String t) {
+        if (s == null || t == null)
+            return false;
 
-        // len1+1, len2+1, because finally return dp[len1][len2]
-        int[][] dp = new int[len1 + 1][len2 + 1];
+        int m = s.length();
+        int n = t.length();
 
-        for (int i = 0; i <= len1; i++) {
-            dp[i][0] = i;
+        if (Math.abs(m - n) > 1) {
+            return false;
         }
 
-        for (int j = 0; j <= len2; j++) {
-            dp[0][j] = j;
-        }
+        int i = 0;
+        int j = 0;
+        int count = 0;
 
-        //iterate though, and check last char
-        for (int i = 0; i < len1; i++) {
-            char c1 = word1.charAt(i);
-            for (int j = 0; j < len2; j++) {
-                char c2 = word2.charAt(j);
+        while (i < m && j < n) {
+            if (s.charAt(i) == t.charAt(j)) {
+                i++;
+                j++;
+            } else {
+                count++;
+                if (count > 1)
+                    return false;
 
-                //if last two chars equal
-                if (c1 == c2) {
-                    //update dp value for +1 length
-                    dp[i + 1][j + 1] = dp[i][j];
+                if (m > n) {
+                    i++;
+                } else if (m < n) {
+                    j++;
                 } else {
-                    int replace = dp[i][j] + 1;
-                    int insert = dp[i][j + 1] + 1;
-                    int delete = dp[i + 1][j] + 1;
-
-                    int min = replace > insert ? insert : replace;
-                    min = delete > min ? min : delete;
-                    dp[i + 1][j + 1] = min;
+                    i++;
+                    j++;
                 }
             }
         }
 
-        return dp[len1][len2];
+        if (i < m || j < n) {
+            count++;
+        }
+
+        if (count == 1)
+            return true;
+
+        return false;
     }
 }
