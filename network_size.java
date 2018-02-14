@@ -2,43 +2,85 @@ import java.util.ArrayList;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.concurrent.TimeUnit;
+
 /**
  * network_size
  * this program takes two cmd line arguments
  * the first is the filename of dictionary text
  * the second is the word we are interested in
  */
-public class network_size {
+public class network_size{
     public static void main(String[] args) {
         String filename = args[0];
         String word = args[1];
-        ArrayList<String> dic = new ArrayList<String>();
+        //divide the dictionaty into sub dictionaries, based on word's length
+        //dividedDic's index is word's length-1, each sub dictionary is an ArrayList<String> of words wit same length
+        ArrayList<ArrayList<String>> dividedDic = new ArrayList<ArrayList<String>>();
+        //start with just one subdictionary with word length of 1
+        dividedDic.add(new ArrayList<String>());
         String line;
         try {
             BufferedReader in = new BufferedReader(new FileReader(filename));
+            int maxLength = 0;
             while ((line = in.readLine()) != null) {
-                dic.add(line.trim());
+                int len = line.trim().length();
+                //put words into sub dictionaries based on their length
+                //create new subdictionaries if needed
+                if (len - 1 > maxLength) {
+                    for (int i = maxLength; i < len; ++i) {
+                        dividedDic.add(new ArrayList<String>());
+                    }
+                    maxLength = dividedDic.size() - 1;
+                }
+                dividedDic.get(len - 1).add(line.trim());
             }
             in.close();
             long starTime = System.currentTimeMillis();
-            int res = size_of_networks(word, dic);
+            int res = size_of_networks(word, dividedDic);
             long endTime = System.currentTimeMillis();
             long runTime = endTime - starTime;
-            System.out.println(word + "'s size of network is "+res);
-            String timeFormatted = String.format("%d min, %d sec", 
-                TimeUnit.MILLISECONDS.toMinutes(runTime),
-                TimeUnit.MILLISECONDS.toSeconds(runTime) - 
-                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(runTime))
-            );
+            System.out.println(word + "'s size of network is " + res);
+            String timeFormatted = String.format("%d min, %d sec", TimeUnit.MILLISECONDS.toMinutes(runTime),
+                    TimeUnit.MILLISECONDS.toSeconds(runTime)
+                            - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(runTime)));
             System.out.println("Runtime is " + timeFormatted);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    //return a word's friends within a dictionary 
-    // then remove this word and its friends from the dictionary
-    public static ArrayList<String> findFriends(String word, ArrayList<String> dic) {
+    //return a word's friends within a divided dictionary
+    //because if word a and word b are friends, |a.length() - b.length()| <= 1
+    //so we only have to lookup for friends in only 3 subdictionaries at most
+    public static ArrayList<String> findFriends(String word, ArrayList<ArrayList<String>> dividedDic) {
+        ArrayList<String> res;
+        int len = word.length();
+        int maxLength = dividedDic.size() - 1;
+        if (len > 1 && (len - 1) < maxLength) {
+            ArrayList<String> r1 = _findFriendsIndic(word, dividedDic.get(len-2));
+            ArrayList<String> r2 = _findFriendsIndic(word, dividedDic.get(len-1));
+            ArrayList<String> r3 = _findFriendsIndic(word, dividedDic.get(len));
+            r1.addAll(r2);
+            r1.addAll(r3);
+            res = r1;
+        } else if(len == 1) {
+            ArrayList<String> r2 = _findFriendsIndic(word, dividedDic.get(len-1));
+            ArrayList<String> r3 = _findFriendsIndic(word, dividedDic.get(len));
+            r2.addAll(r3);
+            res = r2;
+        }else {
+            ArrayList<String> r1 = _findFriendsIndic(word, dividedDic.get(len-2));
+            ArrayList<String> r2 = _findFriendsIndic(word, dividedDic.get(len-1));
+            r1.addAll(r2);
+            res = r1;
+        }
+        return res;
+    }
+
+
+    //return a word's friends within a subdictionary 
+    // then remove this word and its friends from the subdictionary
+    private static ArrayList<String> _findFriendsIndic(String word, ArrayList<String> dic) {
         ArrayList<String> res = new ArrayList<String>();
         ArrayList<Integer> indices = new ArrayList<Integer>();
         for (int i = 0; i < dic.size(); ++i) {
@@ -59,14 +101,14 @@ public class network_size {
     //recursively return the size of a word's network
     //we could use tail recursion in languages that surpport it to
     //reduce memory usage
-    public static int size_of_networks(String word, ArrayList<String> dic) {
-        ArrayList<String> friends = findFriends(word, dic);
+    public static int size_of_networks(String word, ArrayList<ArrayList<String>> dividedDic) {
+        ArrayList<String> friends = findFriends(word, dividedDic);
         int count = 1;
         //if a word has no friend the it network size is 1
         //if not, sum friend's network size
         if (friends.size() != 0) {
             for (String friend : friends) {
-                count += size_of_networks(friend, dic);
+                count += size_of_networks(friend, dividedDic);
             }
         }
         return count;
